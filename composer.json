@@ -1,0 +1,11 @@
+{
+  "name": "johnshopkins/php-redis-queue",
+  "description": "",
+  "license": "MIT",
+  "homepage": "http://github.com/johnshopkins/php-redis-queue",
+  "autoload": {
+    "psr-4" : {
+      "PhpRedisQueue\\" : ["src/"]
+    }
+  }
+}
