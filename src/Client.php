@@ -29,17 +29,20 @@ class Client
    * Pushes a job to the end of the queue
    * @param string $queue   Queue name (DO NOT prefix with `queue:`). Ex: `akamai_rsync`
    * @param string $jobName Name of the specific job to run, defaults to `default`. Ex: `upload`
-   * @param array $data     Data associated with this job
+   * @param array $jobData  Data associated with this job
    * @return mixed
    */
-  public function push(string $queue, string $jobName = 'default', array $data = [])
+  public function push(string $queue, string $jobName = 'default', array $jobData = [])
   {
-    $data = array_merge($data, [
-      'queue' => $queue, // used to debug processing and procecssed queues
-      'datetime' => $this->getDatetime(),
-      'job' => $jobName,
-      'id' => $this->getJobId(),
-    ]);
+    $data = [
+      'meta' => [
+        'jobName' => $jobName,
+        'queue' => $queue, // used to debug processing and procecssed queues
+        'id' => $this->getJobId(),
+        'datetime' => $this->getDatetime(),
+      ],
+      'job' => $jobData
+    ];
 
     return $this->redis->rpush('queue:' . $queue, json_encode($data));
   }
