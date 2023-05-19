@@ -2,13 +2,14 @@
 
 namespace PhpRedisQueue;
 
-use Psr\Log\LoggerInterface;
-
 class QueueWorker
 {
   protected $defaultConfig = [
+    'logger' => null,              // instance of Psr\Log\LoggerInterface
     'processedQueueLimit' => 5000, // pass -1 for no limit
   ];
+
+  protected $config = [];
 
   public string $queueName;
 
@@ -37,12 +38,15 @@ class QueueWorker
   /**
    * @param \Predis\Client $redis
    * @param string $queueName
-   * @param LoggerInterface|null $logger
    */
-  public function __construct(protected \Predis\Client $redis, string $queueName, array $config = [], protected ?LoggerInterface $logger = null)
+  public function __construct(protected \Predis\Client $redis, string $queueName, array $config = [])
   {
     $this->queueName = 'queue:' . $queueName;
     $this->config = array_merge($this->defaultConfig, $config);
+
+    if (isset($this->config['logger']) && !$this->config['logger'] instanceof \Psr\Log\LoggerInterface) {
+      throw new \InvalidArgumentException('Logger must be an instance of Psr\Log\LoggerInterface.');
+    }
   }
 
   public function work()
@@ -98,10 +102,10 @@ class QueueWorker
 
   protected function log($level, $message, $data = [])
   {
-    if (!$this->logger) {
+    if (!isset($this->config['logger'])) {
       return;
     }
 
-    $this->logger->$level($message, $data);
+    $this->config['logger']->$level($message, $data);
   }
 }

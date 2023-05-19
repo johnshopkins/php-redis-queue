@@ -6,13 +6,23 @@ use Psr\Log\LoggerInterface;
 
 class Client
 {
+  protected $defaultConfig = [
+    'logger' => null, // instance of Psr\Log\LoggerInterface
+  ];
+
+  protected $config = [];
+
   /**
    * @param \Predis\Client $redis
    * @param LoggerInterface|null $logger
    */
-  public function __construct(protected \Predis\Client $redis, protected ?LoggerInterface $logger = null)
+  public function __construct(protected \Predis\Client $redis, array $config = [])
   {
+    $this->config = array_merge($this->defaultConfig, $config);
 
+    if (isset($this->config['logger']) && !$this->config['logger'] instanceof \Psr\Log\LoggerInterface) {
+      throw new \InvalidArgumentException('Logger must be an instance of Psr\Log\LoggerInterface.');
+    }
   }
 
   /**
@@ -47,7 +57,7 @@ class Client
 
   protected function log($level, $message, $data = [])
   {
-    if (!$this->logger) {
+    if (!isset($this->config['logger'])) {
       return;
     }
 
