@@ -55,7 +55,7 @@ class QueueWorker
 
       $data = json_decode($jsonData);
 
-      if (!isset($this->callbacks[$data->job])) {
+      if (!isset($this->callbacks[$data->meta->jobName])) {
         $this->log('warning', 'No callback set for job', ['context' => $data]);
         continue;
       }
