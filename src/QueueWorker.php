@@ -60,23 +60,29 @@ class QueueWorker
         continue;
       }
 
-      $response = call_user_func($this->callbacks[$data->job], $data);
+      // perform the work
+      $success = true;
 
-      // add response to original request
-      $data->response = $response;
+      try {
+        // add context (if any) for the dashboard
+        $data->context = call_user_func($this->callbacks[$data->meta->jobName], $data->job, $data->meta);
+      } catch (\Throwable $e) {
+        $success = false;
 
-      // add to appropiate processed list (success or fail)
-      $queue = $response['success'] === true ? $this->successQueue : $this->failedQueue;
-      $this->redis->lpush($queue, json_encode($data));
+        // add exceptpion context for the dashboard
+        $data->context = $this->getExceptionData($e);
 
-      // trim processed lists
-      if ($this->config['processedQueueLimit'] > -1) {
-        $redis->ltrim($queue, 0, $this->config['processedQueueLimit']);
+        // log the error for debugging
+        $this->log('warning', 'Queue job failed', ['data' => $data]);
       }
 
-      // if the job failed, log it
-      if ($response['success'] === false) {
-        $this->log('warning', 'Queue job failed', ['context' => $data]);
+      // add to appropiate processed list (success or fail)
+      $queue = $success === true ? $this->successQueue : $this->failedQueue;
+      $this->redis->lpush($queue, json_encode($data));
+
+      // trim processed lists to keep them tidy
+      if ($this->config['processedQueueLimit'] > -1) {
+        $this->redis->ltrim($queue, 0, $this->config['processedQueueLimit']);
       }
 
       // remove from processing queue
@@ -100,7 +106,17 @@ class QueueWorker
     $this->callbacks[$jobName] = $callable;
   }
 
-  protected function log($level, $message, $data = [])
+  protected function getExceptionData(\Throwable $e)
+  {
+    return [
+      'exception_type' => get_class($e),
+      'exception_code' => $e->getCode(),
+      'exception_message' => $e->getMessage(),
+      'exception_file' => $e->getFile(),
+      'exception_line' => $e->getLine(),
+    ];
+  }
+
   protected function log(string $level, string $message, array $data = [])
   {
     if (!isset($this->config['logger'])) {
