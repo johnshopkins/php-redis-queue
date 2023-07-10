@@ -58,7 +58,7 @@ class Client
     return $this->redis->incr('queue:meta:id');
   }
 
-  protected function log($level, $message, $data = [])
+  protected function log(string $level, string $message, array $data = [])
   {
     if (!isset($this->config['logger'])) {
       return;
