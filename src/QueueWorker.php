@@ -65,7 +65,7 @@ class QueueWorker
 
       try {
         // add context (if any) for the dashboard
-        $data->context = call_user_func($this->callbacks[$data->meta->jobName], $data->job, $data->meta);
+        $data->context = call_user_func($this->callbacks[$data->meta->jobName], $data->job);
       } catch (\Throwable $e) {
         $success = false;
 
