@@ -24,12 +24,12 @@ class Dashboard
         <th width="50%">Fail</th>
       </tr>
       <tr>
-        <td>
+        <td valign="top">
           <?php foreach ($success as $record) : ?>
             <?php $this->printRecord($record); ?>
           <?php endforeach; ?>
         </td>
-        <td>
+        <td valign="top">
           <?php foreach ($failed as $record) : ?>
             <?php $this->printRecord($record); ?>
           <?php endforeach; ?>
