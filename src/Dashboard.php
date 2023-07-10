@@ -59,6 +59,18 @@ class Dashboard
         <td>Datetime</td>
         <td><?= $record->meta->datetime ?></td>
       </tr>
+      <?php if ($record->job) : ?>
+        <tr>
+          <td>Job data</td>
+          <td>
+            <table>
+              <?php foreach ((array) $record->job as $k => $v) : ?>
+                <tr><td><?= $k ?></td><td><?= $v ?></td></tr>
+              <?php endforeach; ?>
+            </table>
+          </td>
+        </tr>
+      <?php endif; ?>
       <?php if ($record->context && $record->context) : ?>
         <tr>
           <td>Context</td>
