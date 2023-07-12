@@ -9,6 +9,10 @@
     }
   },
   "require": {
-    "predis/predis": "^2.1"
+    "predis/predis": "^2.1",
+    "twig/twig": "^3.0",
+    "slim/slim": "4.*",
+    "slim/psr7": "^1.6",
+    "middlewares/trailing-slash": "^2.0"
   }
 }

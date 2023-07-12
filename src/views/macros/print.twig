@@ -1,0 +1,30 @@
+{% macro printRecord(record) %}
+  {% import _self as printMacros %}
+
+  <table>
+    <tr>
+      <th>Job #{{ record.meta.id }}</th>
+    </tr>
+    <tr>
+      <td>{{ printMacros.printValue(record) }}</td>
+    </tr>
+  </table>
+{% endmacro %}
+
+{% macro printValue(value) %}
+  {% import _self as printMacros %}
+
+  {% if value is iterable %}
+    <table>
+      {% for k, v in value %}
+      <tr>
+        <td class="key">{{ k }}</td>
+        <td class="value">{{ printMacros.printValue(v) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    {{ value|nl2br }}
+  {% endif %}
+
+{% endmacro %}
