@@ -2,6 +2,8 @@
 
 namespace PhpRedisQueue;
 
+use Psr\Log\LoggerInterface;
+
 class QueueWorker
 {
   protected $defaultConfig = [
@@ -44,7 +46,7 @@ class QueueWorker
     $this->queueName = 'queue:' . $queueName;
     $this->config = array_merge($this->defaultConfig, $config);
 
-    if (isset($this->config['logger']) && !$this->config['logger'] instanceof \Psr\Log\LoggerInterface) {
+    if (isset($this->config['logger']) && !$this->config['logger'] instanceof LoggerInterface) {
       throw new \InvalidArgumentException('Logger must be an instance of Psr\Log\LoggerInterface.');
     }
   }
@@ -88,22 +90,64 @@ class QueueWorker
       // remove from processing queue
       $removed = $this->redis->lrem($this->processingQueue, 1, $jsonData);
 
+      // call onComplete callback
+
+      $callbackName = $data->meta->jobName . '_complete';
+      if (isset($this->callbacks[$callbackName])) {
+        try {
+          call_user_func($this->callbacks[$callbackName], $success, $data);
+        } catch (\Throwable $e) {
+          $this->log('warning', 'OnComplete callback for completed queued job failed', [
+            'context' => [
+              'exception' => $this->getExceptionData($e),
+              'data' => $data,
+              'job_success' => $success,
+            ]
+          ]);
+        }
+      }
+
       // wait a second before checking the queue again
       sleep(1);
     }
   }
 
   /**
+   * Add a callback for a specific job.
    * @param string $jobName
-   * @param callable $callable Expects an array in return:
-   *                           ['success' => TRUE/FALSE, 'context' => array of k => v pairs]
-   *                           Context data will be added to element in the processing queue (if failed)
-   *                           or the processed queue (if successful).
+   * @param callable $callable {
+   *   @param object $object      Top-level properties are `meta` and `job`. Meta contains information such as
+   *                              the name of the job, queue it was placed in, ID, and datetime the job was
+   *                              initialized. Job contains the data that was passed along with the job.
+   *   @return array              ['success' => TRUE/FALSE, 'context' => array of k => v pairs]
+   *                              Context data will be added to element in the processed:fail queue (if failed)
+   *                              or the processed:success queue (if successful).
    * @return void
    */
   public function addCallback(string $jobName, callable $callable)
   {
     $this->callbacks[$jobName] = $callable;
+  }
+
+  /**
+   * Add a callback for a specific job when it completes, not matter if it was successful or failed.
+   * @param string $jobName
+   * @param callable $callable {
+   *   @param bool   $success     Was the job successful?
+   *   @param object $object      Top-level properties that are always present are `meta`, `context` and `job`.
+   *                              Meta contains information such as the name of the job, queue it was placed in, ID,
+   *                              and datetime the job was initialized. Job contains the data that was passed along
+   *                              with the job. Context contains data returned from the callback function that
+   *                              performs the work (added via QueueWorker::addCallback()
+   *   @return void
+   *                              Context data will be added to element in the processed:fail queue (if failed)
+   *                              or the processed:success queue (if successful).
+   * @return void
+   */
+  public function addOnCompleteCallback(string $jobName, callable $callable)
+  {
+    $callbackName = $jobName . '_complete';
+    $this->callbacks[$callbackName] = $callable;
   }
 
   protected function getExceptionData(\Throwable $e)
