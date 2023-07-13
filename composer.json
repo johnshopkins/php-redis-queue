@@ -13,7 +13,7 @@
     "psr/log": "^1.0",
     "twig/twig": "^2.0",
     "slim/slim": "4.*",
-    "slim/psr7": "^1.6",
+    "slim/psr7": "^1.5",
     "middlewares/trailing-slash": "^2.0"
   }
 }
