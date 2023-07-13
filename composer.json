@@ -11,7 +11,7 @@
   "require": {
     "predis/predis": "^2.1",
     "psr/log": "^1.0",
-    "twig/twig": "^3.0",
+    "twig/twig": "^2.0",
     "slim/slim": "4.*",
     "slim/psr7": "^1.6",
     "middlewares/trailing-slash": "^2.0"
